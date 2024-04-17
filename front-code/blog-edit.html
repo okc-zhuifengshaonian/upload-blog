@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>测试上传图片</title>
+</head>
+<body>
+
+<div id="app">
+    <!-- 选择图片区域 -->
+    <input type="file" @change="fileSelected" name="file" ref="fileInput">
+
+    <!-- 图片回显区域 -->
+    <div v-for="(file,index) in filePathList" :key="index">
+      <img :src="file" alt="">
+    </div><br>
+
+    <!-- 输入其它信息的区域 -->
+    <input v-model="title" placeholder="请输入标题"/><br>
+    <input v-model="content" placeholder="请输入内容"/><br>
+    <Button @click="submit">发布</Button>
+</div>
+
+<script src="./vue.js"></script>
+<script src="./axios.min.js"></script>
+<script>
+  const app = new Vue({
+    el: "#app",
+    data() {
+      return {
+        title: "",
+        content: "",
+        filePathList: [] // 文件列表
+      }
+    },
+    methods: {
+      fileSelected() {
+        /*从 Vue 实例中获取名为 fileInput 的 DOM 元素，并获取用户选择的第一个文件对象（因为按住Ctrl可以选择多个文件）*/
+        let file = this.$refs.fileInput.files[0];
+        let formData = new FormData();
+        formData.append("file", file);
+        const config = {
+          headers: {"Content-Type": "multipart/form-data;boundary=" + new Date().getTime()}
+        };
+
+        /* data 是由后端返回来的图片名称 */
+        axios.post("http://localhost:8848/upload/blog", formData, config)
+          .then(({data}) => this.filePathList.push(data))
+          .catch(this.$message.error);
+      },
+
+      submit() {
+        /* 创建对象 */
+        var data = {
+          title: "",
+          content: "",
+          images: ""
+        };
+
+        data.title = this.title;
+        data.content = this.content;
+        data.images = this.filePathList.join(",");
+        
+        /* 
+          打印 javascript 对象的错误做法： alert("obj ===>" + obj)    打印结果：obj ===>[object Object]
+        */
+       //正确做法是这样打印 javascript 对象
+        alert(JSON.stringify(data));
+        axios.post("http://localhost:8848/blog", data)
+          .then(resp => location.href = "http://www.baidu.com")
+          .catch(this.$message.error);
+      }
+    },
+  })
+</script>
+</body>
+</html>
+
+<style>
+  /* 标签选择器 */
+  /* 给回显的图片设置宽高，防止图片过大 */
+  img {
+      margin-top: 20px;
+      width: 200px;
+      height: 200px;
+      border-radius: 5px;
+  }
+</style>
